@@ -1,55 +1,70 @@
-import React, { useState } from 'react';
-import {storage} from "./firebase";
-import ReactDOM from 'react-dom';
-import {useDropzone} from "react-dropzone";
-import { render } from '@testing-library/react';
+import React, { useState, useCallback } from "react";
+import { storage } from "./firebase";
+import ReactDOM from "react-dom";
+import { useDropzone } from "react-dropzone";
+import { render } from "@testing-library/react";
+import "./index.css";
 
 const UploadImage = () => {
-  const [image, setImage] = useState(null);
-  const [imageUrl, setImageUrl] = useState("");
-  const {acceptedFiles, getRootProps, getInputProps} = useDropzone({multiple:true, maxSize:36700160});
-  
-  const files = acceptedFiles.map(file => (
-    <li key={file.path}>
-      {file.path} - {file.size} bytes
-    </li>
-  ));
+  const [dragImage, setDragImage] = useState("[]");
+  const [imageUrl, setImageUrl] = useState("[]");
+  const [temp, setTemp] = useState(null);
 
-  const uploadChange = (e) => {
-    if (e.target.files[0]){
-      setImage(e.target.files[0]);
+  const onDrop = useCallback((acceptedFiles) => {
+    setDragImage(acceptedFiles);
+    let di = acceptedFiles.map(di => {return(<li key={di.name}>{di.name}</li>)});
+    setTemp(di);
+  }, []);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    maxSize: 36700160,
+    multiple: true,
+  });
+
+
+  let onUpload = () => {
+    for (let i = 0; i < dragImage.length; i++) {
+      let image= dragImage[i];
+      let firebaseUpload = storage.ref(`images/${image.name}`).put(image);
+      firebaseUpload.on(
+        "state_changed",
+        (snapshot) => {},
+        (error) => {
+          console.log(error);
+        },
+        () => {
+          storage
+            .ref("images")
+            .child(image.name)
+            .getDownloadURL()
+            .then((url) => {
+              console.log(url);
+              setImageUrl(url);
+            });
+        }
+      );
     }
   };
 
-  const onUpload = () => {
-    const firebaseUpload = storage.ref(`images/${image.name}`).put(image);
-    firebaseUpload.on("state_changed", snapshot => {}, error => {console.log(error);},() => {
-      storage.ref("images").child(image.name).getDownloadURL().then(url => {
-        console.log(url);
-        setImageUrl(url);
-      });
-    });
-  };
-
   return (
-    <div>
-      <input type="file" onChange={uploadChange}/>
-      <button onClick={onUpload}>Upload Image</button>
-      <img src={imageUrl} alt="Images" />
-      <br/>
-      <section className="container">
-      <div {...getRootProps({className: 'dropzone'})}>
+    <div className="container">
+      <h1 className="text heading">Upload Images to Firebase</h1>
+      <br />
+      <div {...getRootProps()} className="dropzone-box">
         <input {...getInputProps()} />
-        <p>Drag 'n' drop some files here, or click to select files</p>
+        {isDragActive ? (
+          <p className="text">Drop the files here ...</p>
+        ) : (
+          <p className="text">Drag 'n' drop some files here, or click to select files</p>
+        )}
       </div>
-      <aside>
-        <h4>Files</h4>
-        <ul>{files}</ul>
-      </aside>
-    </section>
+      <p className="text">Dropped files -</p>     
+      {temp}
+      <button class="button" onClick={onUpload}>Upload Image to Firebase</button>
+      <br />
+      <img src={imageUrl} alt="Uploaded File" className="image "/>
     </div>
-    
   );
 };
 
-render(<UploadImage/>, document.querySelector("#root"));
+render(<UploadImage />, document.querySelector("#root"));
