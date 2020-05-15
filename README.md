@@ -5,3 +5,7 @@ Uploading Images to firebase.
 4- Add drag and drop multiple images functionality and set dragged images to a variable temp using react-drop-zone library.
 5- finally upload image to firebase using firebase storage library.
 
+How to use it-
+Clone this repo on your system, install npm commands for firebase and drop-zone functionality.
+Run on browser.
+add images using drag and drop and click to upload image button.
