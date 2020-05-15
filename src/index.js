@@ -5,11 +5,14 @@ import { useDropzone } from "react-dropzone";
 import { render } from "@testing-library/react";
 import "./index.css";
 
+//functional component for uploading image
 const UploadImage = () => {
   const [dragImage, setDragImage] = useState("[]");
   const [imageUrl, setImageUrl] = useState("[]");
   const [temp, setTemp] = useState(null);
 
+  //drag and drop multiple images functionality and set dragged images to a variable temp 
+  //using react-drop-zone library
   const onDrop = useCallback((acceptedFiles) => {
     setDragImage(acceptedFiles);
     let di = acceptedFiles.map(di => {return(<li key={di.name}>{di.name}</li>)});
@@ -21,7 +24,7 @@ const UploadImage = () => {
     multiple: true,
   });
 
-
+  //function for uploading dragged images to firebase storage
   let onUpload = () => {
     for (let i = 0; i < dragImage.length; i++) {
       let image= dragImage[i];
